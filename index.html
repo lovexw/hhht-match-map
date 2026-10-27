@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>青城有你 · 呼和浩特同城相亲地图</title>
+<meta name="description" content="呼和浩特本地同城相亲地图，新城区、赛罕区、回民区、玉泉区真实地图查看身边单身青年，实名认证、心动匹配、会员解锁。">
+<link rel="icon" href="assets/img/site/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+<!-- ============ 顶部导航 ============ -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-4.35-7-9.6C5 8.3 7.3 6 10 6c1.1 0 2.2.4 2 1.3C12.2 6.5 13 6 14 6c2.7 0 5 2.3 5 5.4C19 16.65 12 21 12 21z" fill="#fff"/></svg>
+    </div>
+    <div class="logo-txt"><b>青城有你</b><span>呼和浩特 · 同城相亲地图</span></div>
+  </div>
+
+  <div class="top-search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+    <input id="searchInput" type="text" placeholder="搜昵称、职业、标签，如「教师」「咖啡」">
+  </div>
+
+  <div class="top-spacer"></div>
+
+  <div class="seg" id="viewSeg">
+    <button data-view="map" class="on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+      地图
+    </button>
+    <button data-view="cards">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      卡片
+    </button>
+  </div>
+
+  <button class="icon-btn" id="likesBtn" title="我的心动">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-7-9.6C5 8.3 7.3 6 10 6c1.1 0 2 .6 2 1.5C12 6.6 12.9 6 14 6c2.7 0 5 2.3 5 5.4C19 16.65 12 21 12 21z"/></svg>
+    <span class="dot hidden" id="likesDot">0</span>
+  </button>
+
+  <button class="vip-pill off" id="vipEntry">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+    <span id="vipEntryTxt">开通会员</span>
+  </button>
+  <a class="admin-link" href="admin.html">管理后台</a>
+</header>
+
+<!-- ============ 地图 ============ -->
+<div id="map"></div>
+
+<!-- 游客提示 -->
+<div class="guest-banner" id="guestBanner">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+  游客模式：资料与照片已模糊，开通会员查看完整信息
+  <button id="guestBannerBtn">立即开通</button>
+</div>
+
+<!-- ============ 左侧筛选面板 ============ -->
+<aside class="panel filter-panel" id="filterPanel">
+  <div class="filter-head">
+    <h3>筛选身边的人</h3>
+    <span class="count" id="resultCount">0 人</span>
+  </div>
+
+  <div class="f-group">
+    <div class="f-label">性别</div>
+    <div class="gender-tabs" id="genderTabs">
+      <button data-g="A" class="on">全部</button>
+      <button data-g="F">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.35-7-9.6C5 8.3 7.3 6 10 6c1.1 0 2 .6 2 1.5C12 6.6 12.9 6 14 6c2.7 0 5 2.3 5 5.4C19 16.65 12 21 12 21z"/></svg>
+        女生
+      </button>
+      <button data-g="M">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="14" r="6"/><path d="M14.5 9.5L20 4M15 4h5v5"/></svg>
+        男生
+      </button>
+    </div>
+  </div>
+
+  <div class="f-group">
+    <div class="f-label">所在区域</div>
+    <div class="chips" id="districtChips"></div>
+  </div>
+
+  <div class="f-group">
+    <div class="f-label">年龄 <span id="ageLabel" style="color:var(--ink-2);margin-left:auto"></span></div>
+    <div class="range-row">
+      <input type="range" id="ageMin" min="22" max="36" value="22">
+      <input type="range" id="ageMax" min="22" max="36" value="36">
+    </div>
+  </div>
+
+  <div class="f-group">
+    <div class="f-label">身高</div>
+    <div class="chips" id="heightChips"></div>
+  </div>
+
+  <div class="f-group">
+    <div class="f-label">学历 / 婚姻</div>
+    <div class="select-row">
+      <select id="eduSel"><option value="">学历不限</option></select>
+      <select id="marSel"><option value="">婚姻不限</option><option>未婚</option><option>离异无孩</option><option>离异带娃</option></select>
+    </div>
+  </div>
+
+  <div class="f-group">
+    <div class="toggle-row">
+      <div class="toggle-item">仅看当前在线
+        <div class="switch" id="swOnline"></div>
+      </div>
+      <div class="toggle-item">仅看实名认证
+        <div class="switch" id="swVerified"></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="filter-reset" id="resetBtn">重置全部筛选</button>
+
+  <div class="dist-stat" id="distStat"></div>
+</aside>
+
+<!-- 地图右侧统计 -->
+<div class="map-stat">
+  <div class="ms"><b class="live" id="statOnline">0</b><small>当前在线</small></div>
+  <div class="ms"><b id="statNew">0</b><small>今日新增</small></div>
+  <div class="ms"><b id="statVip">0</b><small>会员用户</small></div>
+</div>
+
+<!-- 地图工具 -->
+<div class="map-tools">
+  <div class="layer-switch">
+    <button id="layerBtn" title="切换底图">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 12l9 5 9-5M3 17l9 5 9-5"/></svg>
+    </button>
+    <div class="layer-pop hidden" id="layerPop">
+      <button data-layer="vec" class="on">标准地图</button>
+      <button data-layer="sat">卫星影像</button>
+    </div>
+  </div>
+  <button id="locateBtn" title="定位到我">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+  </button>
+</div>
+
+<!-- 移动端筛选 -->
+<button class="mobile-filter-fab" id="mobileFilterBtn">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18l-7 8v6l-4-2v-4L3 5z"/></svg>
+  筛选
+</button>
+<button class="list-fab" id="listFab">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+  查看 <span id="fabCount">0</span> 人卡片
+</button>
+
+<!-- ============ 卡片视图 ============ -->
+<main class="cardview hidden" id="cardView"><div class="card-grid" id="cardGrid"></div></main>
+
+<!-- ============ 详情抽屉 ============ -->
+<div class="mask" id="detailMask"></div>
+<aside class="drawer" id="detailDrawer">
+  <div class="drawer-head">
+    <h3>个人主页</h3>
+    <button class="drawer-close" id="detailClose">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="detailBody"></div>
+  <div class="drawer-actions">
+    <button class="act" id="actGift">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12M12 8S9.5 3 7 4.5 8.5 8 12 8zm0 0s2.5-5 5-3.5S15.5 8 12 8z"/></svg>
+      送礼物
+    </button>
+    <button class="act" id="actChat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l.9-5A8 8 0 1 1 21 12z"/></svg>
+      打招呼
+    </button>
+    <button class="act like" id="actLike">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-4.35-7-9.6C5 8.3 7.3 6 10 6c1.1 0 2 .6 2 1.5C12 6.6 12.9 6 14 6c2.7 0 5 2.3 5 5.4C19 16.65 12 21 12 21z"/></svg>
+      <span id="actLikeTxt">心动</span> <span id="actLikeNum"></span>
+    </button>
+  </div>
+</aside>
+
+<!-- ============ 心动列表 ============ -->
+<aside class="drawer like-drawer" id="likesDrawer">
+  <div class="drawer-head">
+    <h3>我的心动</h3>
+    <button class="drawer-close" id="likesClose">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="likesBody"></div>
+</aside>
+
+<!-- ============ 会员付费弹窗 ============ -->
+<div class="modal hidden" id="payModal">
+  <div class="mask" id="payMask"></div>
+  <div class="pay-box" id="payBox">
+    <div class="pay-head">
+      <button class="close" id="payClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <h2>开通「青城心动会员」</h2>
+      <p>解锁全部用户高清照片、完整资料、精确距离、择偶要求与联系方式，不限次心动，优先推荐。</p>
+    </div>
+    <div class="pay-body" id="payBody">
+      <div class="plans" id="plans"></div>
+      <ul class="pay-perks">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>高清照片与完整资料</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>精确距离与位置</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>不限次心动与打招呼</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>会员专属标识与优先推荐</li>
+      </ul>
+      <div class="pay-ways">
+        <button class="pay-way on" data-way="wx"><span class="ic wx">微</span>微信支付</button>
+        <button class="pay-way" data-way="zfb"><span class="ic zfb">支</span>支付宝</button>
+      </div>
+      <button class="pay-btn" id="payBtn">立即支付 <span id="payPrice">¥39.9</span></button>
+      <p class="pay-tip">演示环境：点击支付即模拟开通，不产生真实交易。<br>正式版接入微信/支付宝扫码与 Apple Pay。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 互相心动弹窗 ============ -->
+<div class="match-pop" id="matchPop">
+  <div class="match-card">
+    <div class="imgs">
+      <img class="you" id="matchYou" src="assets/img/site/favicon.svg" alt="">
+      <div class="heart-mid">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.35-7-9.6C5 8.3 7.3 6 10 6c1.1 0 2 .6 2 1.5C12 6.6 12.9 6 14 6c2.7 0 5 2.3 5 5.4C19 16.65 12 21 12 21z"/></svg>
+      </div>
+      <img class="ta" id="matchTa" src="" alt="">
+    </div>
+    <h3>互相心动</h3>
+    <p id="matchText">对方也对你心动了，赶紧打个招呼吧</p>
+    <div class="mbtns">
+      <button class="skip" id="matchSkip">继续看看</button>
+      <button class="go" id="matchGo">去打招呼</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="https://fastly.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://fastly.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
